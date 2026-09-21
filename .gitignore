@@ -1,0 +1,16 @@
+# Zależności (odtwarzalne: npm install)
+node_modules/
+
+# Artefakty pośrednie kompilacji Neutralino
+desktop/neutralino/build/obj/
+desktop/neutralino/MiraOS-raw.exe
+*.o
+*.obj
+
+# Pobrane archiwa źródeł
+desktop/neutralino/*.tar.gz
+desktop/neutralino/*.zip
+
+# System
+.DS_Store
+Thumbs.db

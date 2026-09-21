@@ -1,0 +1,69 @@
+import { sendMessage } from '../ws/websocket';
+import type {
+    MemoryInfo,
+    KernelInfo,
+    OSInfo,
+    CPUInfo,
+    Display,
+    Disk,
+    MousePosition,
+    NetworkInterfaceInfo
+} from '../types/api/computer';
+import type { SendKeyState } from '../types/enums';
+
+export function getMemoryInfo(): Promise<MemoryInfo> {
+    return sendMessage('computer.getMemoryInfo');
+};
+
+export function getArch(): Promise<string> {
+    return sendMessage('computer.getArch');
+};
+
+export function getKernelInfo(): Promise<KernelInfo> {
+    return sendMessage('computer.getKernelInfo');
+};
+
+export function getOSInfo(): Promise<OSInfo> {
+    return sendMessage('computer.getOSInfo');
+};
+
+export function getCPUInfo(): Promise<CPUInfo> {
+    return sendMessage('computer.getCPUInfo');
+};
+
+export function getDisplays(): Promise<Display[]> {
+    return sendMessage('computer.getDisplays');
+};
+
+export function getDisks(): Promise<Disk> {
+    return sendMessage('computer.getDisks');
+};
+
+
+export function getHostname(): Promise<string> {
+    return sendMessage('computer.getHostname');
+};
+
+export function getMousePosition(): Promise<MousePosition> {
+    return sendMessage('computer.getMousePosition');
+};
+
+export function setMousePosition(x: number, y: number): Promise<void> {
+    return sendMessage('computer.setMousePosition', { x, y });
+}
+
+export function setMouseGrabbing(grabbing: boolean): Promise<void> {
+    return sendMessage('computer.setMouseGrabbing', { grabbing });
+}
+
+export function sendKey(key: number, state: SendKeyState): Promise<void> {
+    return sendMessage('computer.sendKey', { key, state });
+}
+
+export function getNetworkInterfaces(): Promise<NetworkInterfaceInfo> {
+    return sendMessage('computer.getNetworkInterfaces');
+};
+
+export function getMachineId(): Promise<string> {
+    return sendMessage('computer.getMachineId');
+};

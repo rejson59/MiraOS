@@ -1,0 +1,12 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "node",
+        "declarationDir": "./dist/declarations/",
+        "noImplicitAny": false,
+        "allowJs": false,
+        "resolveJsonModule": true,
+        "declaration": true
+    }
+}

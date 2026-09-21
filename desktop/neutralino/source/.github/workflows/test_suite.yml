@@ -1,0 +1,168 @@
+name: Test suite
+
+on: [push, pull_request]
+
+env: 
+  BUILD_CLIENT: |
+    npm i -g @electron/asar
+    cd ..
+    git clone https://github.com/neutralinojs/neutralino.js.git
+    cd neutralino.js
+    npm ci
+    cd ../neutralinojs
+    ./scripts/make_res_neu.sh
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-22.04
+    
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+            toolchain: ''
+          - arch: arm64
+            toolchain: '-DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/linux-aarch64.cmake'
+          - arch: armhf
+            toolchain: '-DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/linux-armhf.cmake'
+        
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Setup cross-compile
+      if: ${{ matrix.arch == 'arm64' || matrix.arch == 'armhf' }}
+      run: |
+        sudo dpkg --add-architecture ${{ matrix.arch }}
+        sudo mv /etc/apt/sources.list /etc/apt/sources.list.amd64.bak
+
+        sudo tee /etc/apt/sources.list <<'EOF'
+        deb [arch=amd64] http://archive.ubuntu.com/ubuntu jammy main universe multiverse restricted
+        deb [arch=amd64] http://archive.ubuntu.com/ubuntu jammy-updates main universe multiverse restricted
+        deb [arch=amd64] http://archive.ubuntu.com/ubuntu jammy-security main universe multiverse restricted
+
+        deb [arch=${{ matrix.arch }}] http://ports.ubuntu.com/ubuntu-ports jammy main universe multiverse restricted
+        deb [arch=${{ matrix.arch }}] http://ports.ubuntu.com/ubuntu-ports jammy-updates main universe multiverse restricted
+        deb [arch=${{ matrix.arch }}] http://ports.ubuntu.com/ubuntu-ports jammy-security main universe multiverse restricted
+        EOF
+    
+    - name: Install amd64 dependencies
+      if: ${{ matrix.arch == 'amd64' }}
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y -f \
+          g++ \
+          pkg-config \
+          git \
+          libgtk-3-dev \
+          libwebkit2gtk-4.0-dev
+
+    - name: Install arm64 toolchains and dependencies
+      if: ${{ matrix.arch == 'arm64' }}
+      run: |
+        sudo apt-get clean
+        sudo apt-get update
+        sudo apt-get install -y \
+          gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
+          pkg-config \
+          git \
+          libgtk-3-dev:arm64 libwebkit2gtk-4.0-dev:arm64
+
+    - name: Install arm64 toolchains and dependencies
+      if: ${{ matrix.arch == 'armhf' }}
+      run: |
+        sudo apt-get clean
+        sudo apt-get update
+        sudo apt-get install -y \
+          gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf \
+          git \
+          libgtk-3-dev:armhf libwebkit2gtk-4.0-dev:armhf
+    
+    - name: Build ${{ matrix.arch }}
+      run: |
+        git config --global --add safe.directory $GITHUB_WORKSPACE
+        mkdir -p build
+        cmake -DCMAKE_BUILD_TYPE=Release . -G Ninja -B build ${{ matrix.toolchain }}
+        ninja -C build -j$(nproc)
+
+    - name: Setup Spec Requirements (Build client)
+      if: ${{ matrix.arch == 'amd64' }}
+      run: |
+        echo "$BUILD_CLIENT" > build_client.sh
+        chmod +x build_client.sh
+        ./build_client.sh
+
+    - name: Setup Spec Requirements (Setup extensions)
+      if: ${{ matrix.arch == 'amd64' }}
+      working-directory: ./bin/extensions/sampleextension
+      run: npm ci
+
+    - name: Run Spec
+      if: ${{ matrix.arch == 'amd64' }}
+      working-directory: ./spec
+      run: |
+        npm ci
+        xvfb-run npm run test
+
+
+  build-windows:
+    runs-on: windows-2025
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Setup MSVC
+      uses: ilammy/msvc-dev-cmd@v1
+
+    - name: Build    
+      shell: cmd
+      run: |
+        mkdir build
+        cmake -DCMAKE_BUILD_TYPE=Release . -G "Ninja" -B build
+        ninja -C build -j %NUMBER_OF_PROCESSORS%
+
+    - name: Setup Spec Requirements (Build client)
+      shell: bash
+      run: |
+        echo "$BUILD_CLIENT" > build_client.sh
+        chmod +x build_client.sh
+        ./build_client.sh
+
+    - name: Setup Spec Requirements (Setup extensions)
+      working-directory: ./bin/extensions/sampleextension
+      run: npm ci
+
+    - name: Run Spec
+      working-directory: ./spec
+      run: |
+        npm ci
+        npm run test
+
+  build-darwin:
+    runs-on: macos-15
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Build arm64
+      run: |
+        rm -fr build
+        mkdir -p build
+        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=arm64 . -G Ninja -B build
+        ninja -C build
+
+    - name: Setup Spec Requirements (Build client)
+      run: |
+        echo "$BUILD_CLIENT" > build_client.sh
+        chmod +x build_client.sh
+        ./build_client.sh
+
+    - name: Setup Spec Requirements (Setup extensions)
+      working-directory: ./bin/extensions/sampleextension
+      run: npm ci
+
+    - name: Run Spec
+      working-directory: ./spec
+      run: |
+        npm ci
+        npm run test

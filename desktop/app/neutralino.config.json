@@ -1,0 +1,46 @@
+{
+  "$schema": "https://raw.githubusercontent.com/neutralinojs/neutralinojs/main/schemas/neutralino.config.schema.json",
+  "applicationName": "MiraOS",
+  "applicationId": "pl.miraos.desktop",
+  "version": "1.0.0",
+  "port": 0,
+  "defaultMode": "window",
+  "documentRoot": "/resources/",
+  "url": "/",
+  "enableServer": true,
+  "enableNativeAPI": true,
+  "exportAuthInfo": false,
+  "singlePageServe": true,
+  "tokenSecurity": "one-time",
+  "logging": {
+    "enabled": true,
+    "writeToLogFile": false
+  },
+  "nativeAllowList": [
+    "app.*",
+    "os.*",
+    "window.*",
+    "storage.*",
+    "debug.*",
+    "filesystem.*"
+  ],
+  "modes": {
+    "window": {
+      "title": "MiraOS",
+      "width": 1280,
+      "height": 780,
+      "minWidth": 960,
+      "minHeight": 600,
+      "center": true,
+      "fullScreen": false,
+      "alwaysOnTop": false,
+      "icon": "/resources/icons/appIcon.png",
+      "enableInspector": false,
+      "borderless": false,
+      "maximize": true,
+      "hidden": true,
+      "resizable": true,
+      "exitProcessOnClose": true
+    }
+  }
+}
